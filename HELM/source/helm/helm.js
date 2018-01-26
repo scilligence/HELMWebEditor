@@ -1,6 +1,6 @@
 ﻿/*******************************************************************************
-* Copyright C 2017, The Pistoia Alliance
-*  Version 2.0.0.2017-01-16
+* Copyright (C)2018, The Pistoia Alliance
+*  Version 2.1.0.2018-01-26
 * 
 * Created by Scilligence, built on JSDraw.Lite
 * 
@@ -29,7 +29,7 @@
 
 /**
 @project HELM Web Editor
-@version 2.0.0
+@version 2.1.0
 @description HELM Web Editor built on JSDraw.Lite
 */
 
@@ -50,17 +50,23 @@ if (org.helm == null)
     org.helm = {};
 
 org.helm.webeditor = {
-    kVersion: "2.0.0.2017-01-09s",
+    kVersion: "2.1.0.2017-11-13",
     atomscale: 2,
     bondscale: 1.6,
+    allowHeadToHeadConnection: true,
+    ambiguity: false,
 
     HELM: {
         BASE: "HELM_BASE",
         SUGAR: "HELM_SUGAR",
         LINKER: "HELM_LINKER",
         AA: "HELM_AA",
-        CHEM: "HELM_CHEM"
+        CHEM: "HELM_CHEM",
+        BLOB: "HELM_BLOB",
+        NUCLEOTIDE: "HELM_NUCLETIDE" // only for the combo *
     },
+
+    blobtypes: ["Bead", "Gold Particle"],
 
     /**
     * Test if a node is HELM monomer
@@ -70,9 +76,9 @@ org.helm.webeditor = {
         if (a == null)
             return false;
 
-        var biotype = typeof(a) == "string" ? a : a.biotype();
+        var biotype = typeof (a) == "string" ? a : a.biotype();
         return biotype == org.helm.webeditor.HELM.BASE || biotype == org.helm.webeditor.HELM.SUGAR || biotype == org.helm.webeditor.HELM.LINKER ||
-            biotype == org.helm.webeditor.HELM.AA || biotype == org.helm.webeditor.HELM.CHEM;
+            biotype == org.helm.webeditor.HELM.AA || biotype == org.helm.webeditor.HELM.CHEM || biotype == org.helm.webeditor.HELM.BLOB || biotype == org.helm.webeditor.HELM.NUCLEOTIDE;
     },
 
     /**
@@ -87,6 +93,10 @@ org.helm.webeditor = {
         monomertypes[org.helm.webeditor.HELM.AA] = "Amino Acid";
         monomertypes[org.helm.webeditor.HELM.CHEM] = "Chem";
         return monomertypes;
+    },
+
+    symbolCase: function (s) {
+        return s == null ? null : s.toLowerCase();
     },
 
     /**
@@ -111,6 +121,27 @@ org.helm.webeditor = {
             scil.connect(btn, "onclick", function (e) { me.aboutDlg.hide(); e.preventDefault(); });
         }
         this.aboutDlg.show();
+    },
+
+    isAmbiguous: function (elem, biotype) {
+        if (elem == "*" || elem == "_" || biotype == org.helm.webeditor.HELM.AA && elem == 'X' ||
+            (biotype == org.helm.webeditor.HELM.SUGAR || biotype == org.helm.webeditor.HELM.BASE || biotype == org.helm.webeditor.HELM.LINKER) && elem == 'N') {
+            return true;
+        }
+
+        if (!scil.Utils.startswith(elem, '(') || !scil.Utils.endswith(elem, ')'))
+            return false;
+
+        elem = elem.substr(1, elem.length - 2);
+        var ss = org.helm.webeditor.IO.split(elem, ',');
+        if (ss.length > 1)
+            return true;
+
+        ss = org.helm.webeditor.IO.split(elem, '+');
+        if (ss.length > 1)
+            return true;
+
+        return false;
     }
 };
 
